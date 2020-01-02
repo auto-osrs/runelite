@@ -121,7 +121,12 @@ public class Constants
 	public static final double MAX_CAMERA_YAW = 2048;
 
 	/**
-	 * The default camera tolerance, this value gives a tolerance of 1.5%.
+	 * The minimum camera pitch value within the RuneScape client.
 	 */
-	public static final double DEFAULT_CAMERA_TOLERANCE = 0.015;
+	public static final double MIN_CAMERA_PITCH = 128;
+
+	/**
+	 * The maximum camera pitch value within the RuneScape client.
+	 */
+	public static final double MAX_CAMERA_PITCH = 383;
 }

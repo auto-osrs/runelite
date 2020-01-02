@@ -32,8 +32,10 @@ import net.runelite.client.automation.input.Keyboard;
 import net.runelite.client.automation.input.KeyboardKey;
 import net.runelite.client.automation.util.BotExecutor;
 import net.runelite.client.automation.util.Execution;
+import net.runelite.client.automation.util.calculations.BotMath;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class Camera
@@ -42,6 +44,20 @@ public class Camera
 	private static Client client;
 
 	private static ExecutorService executor = BotExecutor.getExecutor();
+
+	private static ExecutorService keyboardExecutor = Executors.newFixedThreadPool(2);
+
+	/**
+	 * The camera yaw tolerance to use when calculating whether to change the
+	 * yaw value (1.5%).
+	 */
+	private static final double CAMERA_YAW_TOLERANCE = 0.015;
+
+	/**
+	 * The camera pitch tolerance to use when calculating whether to change
+	 * the pitch value (3.5%).
+	 */
+	private static final double CAMERA_PITCH_TOLERANCE = 0.035;
 
 	/**
 	 * Gets the current yaw value as an angle.
@@ -53,74 +69,170 @@ public class Camera
 	}
 
 	/**
+	 * Gets the current pitch value normalised to be between 0 and 1.
+	 *
+	 * @return The normalised camera pitch.
+	 */
+	public static double getPitch() {
+		double normalisedCameraPitch = BotMath.normalise(
+				client.getCameraPitch(),
+				Constants.MIN_CAMERA_PITCH,
+				Constants.MAX_CAMERA_PITCH
+		);
+
+		return BotMath.round(normalisedCameraPitch, 3);
+	}
+
+	/**
 	 * Turns the camera to the specified yaw.
 	 *
-	 * @param yaw The yaw angle to turn to, this should be an angle between 0-360.
+	 * @param yaw The yaw angle to turn to, this should be an angle between 0 and 360.
 	 */
 	public static void turnTo(int yaw) {
-		turnTo(yaw, Constants.DEFAULT_CAMERA_TOLERANCE);
+		turnTo(yaw, getPitch());
+	}
+
+	/**
+	 * Turns the camera to the specified yaw.
+	 *
+	 * @param pitch The normalised pitch to turn to, this should be a value between 0 and 1.
+	 */
+	public static void turnTo(double pitch) {
+		turnTo(getYaw(), pitch);
 	}
 
 	/**
 	 * Turns the camera to the specified yaw using a set tolerance.
 	 *
-	 * @param yaw The yaw angle to turn to, this should be an angle between 0-360.
-	 * @param tolerance The tolerance used to check if we have reached our target yaw, a
-	 *                  value of 0.05 gives us a 5% tolerance, if the provided tolerance is
-	 *                  below 1.5% (0.015) it will default the a 1.5% tolerance.
+	 * @param yaw The yaw angle to turn to, this should be an angle between 0 and 360.
+	 * @param pitch The normalised pitch to turn to, this should be between 0 and 1.
 	 */
-	public static void turnTo(int yaw, double tolerance) {
+	public static void turnTo(int yaw, double pitch) {
 
 		if (yaw < 0 || yaw > 360) {
 			log.info(String.format("[CAMERA] Your target yaw (%d) must be between 0 and 360.", yaw));
 			return;
 		}
 
-		// Ensure there is always at least a 1.5% tolerance.
-		double cameraTolerance = Math.max(Constants.DEFAULT_CAMERA_TOLERANCE, tolerance);
+		if (pitch < 0 || pitch > 1) {
+			log.info(String.format("[CAMERA] Your target pitch (%.2f) must be between 0 and 1.", pitch));
+			return;
+		}
 
 		executor.submit(() -> {
+			keyboardExecutor.submit(() -> {
+				processPitchMovement(getPitch(), pitch);
+			});
 
-			boolean shouldTurnLeft = shouldTurnLeft(getYaw(), yaw);
-			boolean needsToChangeYaw = getAngleDifference(getYaw(), yaw) > (360 * cameraTolerance);
+			keyboardExecutor.submit(() -> {
+				processYawMovement(getYaw(), yaw);
+			});
+		});
+	}
 
-			KeyboardKey key = shouldTurnLeft
-					? KeyboardKey.KEY_D
-					: KeyboardKey.KEY_A;
+	/**
+	 * Processes the yaw movement (if any) using the relevant keyboard keys.
+	 *
+	 * @param currentYaw The current camera yaw angle.
+	 * @param targetYaw The target camera yaw angle.
+	 */
+	private static void processYawMovement(int currentYaw, int targetYaw) {
+		boolean shouldTurnLeft = shouldTurnLeft(currentYaw, targetYaw);
+		boolean needsToChangeYaw = getAngleDifference(currentYaw, targetYaw) > (360 * CAMERA_YAW_TOLERANCE);
 
-			if (needsToChangeYaw) {
-				log.info(
+		KeyboardKey yawKey = shouldTurnLeft
+				? KeyboardKey.KEY_D
+				: KeyboardKey.KEY_A;
+
+		if (needsToChangeYaw) {
+			log.info(
 					String.format("[CAMERA] Changing yaw to %d, turning %s by pressing %s.",
-						yaw,
-						shouldTurnLeft
-								? "left"
-								: "right",
-						key.toString()
+							targetYaw,
+							shouldTurnLeft
+									? "left"
+									: "right",
+							yawKey.toString()
 					)
+			);
+
+			Keyboard.pressKey(yawKey);
+		}
+
+		while (needsToChangeYaw) {
+			needsToChangeYaw = getAngleDifference(getYaw(), targetYaw) > (360 * CAMERA_YAW_TOLERANCE);
+
+			if (!needsToChangeYaw) {
+				log.info(
+						String.format("[CAMERA] Reached yaw of %d, releasing %s. (Target Yaw: %d).",
+								getYaw(), yawKey.toString(), targetYaw
+						)
 				);
 
-				Keyboard.pressKey(key);
+				Keyboard.releaseKey(yawKey);
 			}
 
-			while (needsToChangeYaw) {
-				needsToChangeYaw = getAngleDifference(getYaw(), yaw) > (360 * cameraTolerance);
+			Execution.delay(15, 10, 20);
+		}
+	}
 
-				if (!needsToChangeYaw) {
-					log.info(
-						String.format("[CAMERA] Reached yaw of %d, releasing %s. (Target Yaw: %d).",
-							getYaw(), key.toString(), yaw
+	/**
+	 * Performs the pitch movement (if any) using the relevant keyboard keys.
+	 *
+	 * @param currentPitch The current normalised camera pitch.
+	 * @param targetPitch The target normalised camera pitch.
+	 */
+	private static void processPitchMovement(double currentPitch, double targetPitch) {
+		boolean needsToChangePitch;
+		boolean shouldMoveUp = targetPitch > currentPitch;
+		double pitchDifference = currentPitch - targetPitch;
+
+		// Check whether the pitchDifference is large enough to justify moving the camera.
+		if (Math.abs(pitchDifference) < CAMERA_PITCH_TOLERANCE) {
+			needsToChangePitch = false;
+		} else {
+			// Calculate whether we have crossed the target pitch boundary.
+			needsToChangePitch = shouldMoveUp
+					? pitchDifference < 0
+					: pitchDifference > 0;
+		}
+
+		KeyboardKey pitchKey = shouldMoveUp
+				? KeyboardKey.KEY_W
+				: KeyboardKey.KEY_S;
+
+		if (needsToChangePitch) {
+			log.info(
+					String.format("[CAMERA] Changing pitch to %.2f, moving %s by pressing %s. (Current Pitch: %.2f)",
+							targetPitch,
+							shouldMoveUp
+									? "up"
+									: "down",
+							pitchKey.toString(),
+							getPitch()
+					)
+			);
+
+			Keyboard.pressKey(pitchKey);
+		}
+
+		while (needsToChangePitch) {
+			pitchDifference = getPitch() - targetPitch;
+			needsToChangePitch = shouldMoveUp
+					? pitchDifference < 0
+					: pitchDifference > 0;
+
+			if (!needsToChangePitch) {
+				log.info(
+						String.format("[CAMERA] Reached pitch of %.2f, releasing %s. (Target Pitch: %.2f).",
+								getPitch(), pitchKey.toString(), targetPitch
 						)
-					);
+				);
 
-					Keyboard.releaseKey(key);
-				}
-
-				Execution.delay(20, 5, 30);
+				Keyboard.releaseKey(pitchKey);
 			}
 
-			return true;
-		});
-
+			Execution.delay(15, 10, 20);
+		}
 	}
 
 	/**
