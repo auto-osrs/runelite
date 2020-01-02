@@ -37,6 +37,8 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.hooks.Callbacks;
 import net.runelite.client.account.SessionManager;
+import net.runelite.client.automation.Camera;
+import net.runelite.client.automation.input.Keyboard;
 import net.runelite.client.callback.Hooks;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ChatColorConfig;
@@ -96,6 +98,16 @@ public class RuneLiteModule extends AbstractModule
 		bind(Logger.class)
 			.annotatedWith(Names.named("Core Logger"))
 			.toInstance(LoggerFactory.getLogger(RuneLite.class));
+
+		processAutomationBindings();
+	}
+
+	/**
+	 * Processes all automation related bindings/injections.
+	 */
+	private void processAutomationBindings() {
+		requestStaticInjection(Camera.class);
+		requestStaticInjection(Keyboard.class);
 	}
 
 	@Provides

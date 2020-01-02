@@ -114,4 +114,14 @@ public class Constants
 	 * Height of a standard item sprite
 	 */
 	public static final int ITEM_SPRITE_HEIGHT = 32;
+
+	/**
+	 * The maximum camera yaw value.
+	 */
+	public static final double MAX_CAMERA_YAW = 2048;
+
+	/**
+	 * The default camera tolerance, this value gives a tolerance of 1.5%.
+	 */
+	public static final double DEFAULT_CAMERA_TOLERANCE = 0.015;
 }
