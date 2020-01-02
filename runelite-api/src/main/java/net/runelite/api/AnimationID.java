@@ -335,6 +335,7 @@ public final class AnimationID
 
 	// Lizardman shaman
 	public static final int LIZARDMAN_SHAMAN_SPAWN = 7157;
+	public static final int LIZARDMAN_SHAMAN_SPAWN_EXPLOSION = 7159;
 
 	// Combat counter
 	public static final int BARRAGE_ANIMATION = 1979;
@@ -360,4 +361,7 @@ public final class AnimationID
 	public static final int SURGE_SPELL_ANIMATION = 7855;
 	public static final int HIGH_ALCH_ANIMATION = 713;
 	public static final int LUNAR_HUMIDIFY = 6294;
+	public static final int PRAY_AT_ALTAR = 645;
+	public static final int ENSOULED_HEADS_ANIMATION = 7198;
+
 }
