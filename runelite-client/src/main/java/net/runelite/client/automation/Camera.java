@@ -146,12 +146,13 @@ public class Camera
 
 		if (needsToChangeYaw) {
 			log.info(
-					String.format("[CAMERA] Changing yaw to %d, turning %s by pressing %s.",
+					String.format("[CAMERA] Changing yaw to %d, turning %s by pressing %s. (Current Yaw: %d)",
 							targetYaw,
 							shouldTurnLeft
 									? "left"
 									: "right",
-							yawKey.toString()
+							yawKey.toString(),
+							currentYaw
 					)
 			);
 
