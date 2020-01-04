@@ -1,5 +1,8 @@
 package net.runelite.client.automation.util.calculations;
 
+import net.runelite.api.Locatable;
+import net.runelite.api.coords.WorldPoint;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -29,5 +32,28 @@ public class BotMath {
         }
 
         return value;
+    }
+
+    /**
+     * Calculates the angle between 2 points.
+     *
+     * @param origin The origin point.
+     * @param target The target point.
+     * @return The calculated angle that has been normalised to be between 0 and 360.
+     */
+    public static int getAngleBetween(Locatable origin, Locatable target) {
+        WorldPoint originPosition = origin.getWorldLocation();
+        WorldPoint targetPosition = target.getWorldLocation();
+
+        // https://math.stackexchange.com/questions/470112/calculate-camera-pitch-yaw-to-face-point/470121
+        double dx = targetPosition.getX() - originPosition.getX();
+        double dy = targetPosition.getY() - originPosition.getY();
+        int angleDifference = (int) Math.toDegrees(StrictMath.atan2(dy, dx)) - 90;
+
+        if (angleDifference >= 0) {
+            return angleDifference % 360;
+        }
+
+        return (angleDifference + 360) % 360;
     }
 }

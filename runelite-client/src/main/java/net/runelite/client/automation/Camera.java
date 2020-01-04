@@ -28,6 +28,8 @@ import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Constants;
+import net.runelite.api.Locatable;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.automation.input.Keyboard;
 import net.runelite.client.automation.input.KeyboardKey;
 import net.runelite.client.automation.util.BotExecutor;
@@ -131,6 +133,38 @@ public class Camera
 	}
 
 	/**
+	 * Turns the camera to the specified target.
+	 *
+	 * @param target The target to turn the camera to.
+	 */
+	public static void turnTo(Locatable target) {
+		int targetYaw = BotMath.getAngleBetween(Players.getLocal(), target);
+		double targetPitch = calculateTargetPitch(Players.getLocal(), target);
+
+		turnTo(targetYaw, targetPitch);
+	}
+
+	/**
+	 * Calculates the normalised pitch angle between 2 points.
+	 *
+	 * @param origin The origin point/location.
+	 * @param target The target point/location.
+	 * @return The normalised pitch
+	 */
+	private static double calculateTargetPitch(Locatable origin, Locatable target) {
+		WorldPoint originLocation = origin.getWorldLocation();
+		WorldPoint targetLocation = target.getWorldLocation();
+
+		// https://math.stackexchange.com/questions/470112/calculate-camera-pitch-yaw-to-face-point/470121
+		double dx = originLocation.getX() - targetLocation.getX();
+		double dy = originLocation.getY() - targetLocation.getY();
+		double pitch = Math.atan2(dy, Math.sqrt(dx * dx));
+		pitch = (pitch/Math.PI + 1) / 2; // Normalise the result to be between 0 and 1
+
+		return Math.max(0.1, Math.abs(pitch));
+	}
+
+	/**
 	 * Processes the yaw movement (if any) using the relevant keyboard keys.
 	 *
 	 * @param currentYaw The current camera yaw angle.
@@ -189,13 +223,13 @@ public class Camera
 
 		// Check whether the pitchDifference is large enough to justify moving the camera.
 		if (Math.abs(pitchDifference) < CAMERA_PITCH_TOLERANCE) {
-			needsToChangePitch = false;
-		} else {
-			// Calculate whether we have crossed the target pitch boundary.
-			needsToChangePitch = shouldMoveUp
-					? pitchDifference < 0
-					: pitchDifference > 0;
+			return;
 		}
+
+		// Calculate whether we have crossed the target pitch boundary.
+		needsToChangePitch = shouldMoveUp
+				? pitchDifference < 0
+				: pitchDifference > 0;
 
 		KeyboardKey pitchKey = shouldMoveUp
 				? KeyboardKey.KEY_W
