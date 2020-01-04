@@ -27,17 +27,12 @@ package net.runelite.client;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
-import java.applet.Applet;
-import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Supplier;
-import javax.annotation.Nullable;
-import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.hooks.Callbacks;
 import net.runelite.client.account.SessionManager;
 import net.runelite.client.automation.Camera;
+import net.runelite.client.automation.GameObjects;
+import net.runelite.client.automation.Players;
 import net.runelite.client.automation.input.Keyboard;
 import net.runelite.client.callback.Hooks;
 import net.runelite.client.chat.ChatMessageManager;
@@ -57,6 +52,14 @@ import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import javax.inject.Singleton;
+import java.applet.Applet;
+import java.io.File;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 public class RuneLiteModule extends AbstractModule
 {
@@ -108,6 +111,8 @@ public class RuneLiteModule extends AbstractModule
 	private void processAutomationBindings() {
 		requestStaticInjection(Camera.class);
 		requestStaticInjection(Keyboard.class);
+		requestStaticInjection(GameObjects.class);
+		requestStaticInjection(Players.class);
 	}
 
 	@Provides

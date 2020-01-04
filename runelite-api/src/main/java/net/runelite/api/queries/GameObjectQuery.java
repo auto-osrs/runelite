@@ -24,15 +24,16 @@
  */
 package net.runelite.api.queries;
 
+import net.runelite.api.Client;
+import net.runelite.api.GameObject;
+import net.runelite.api.LocatableQueryResults;
+import net.runelite.api.Tile;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import net.runelite.api.Client;
-import net.runelite.api.GameObject;
-import net.runelite.api.LocatableQueryResults;
-import net.runelite.api.Tile;
 
 public class GameObjectQuery extends TileObjectQuery<GameObject, GameObjectQuery>
 {
@@ -43,7 +44,7 @@ public class GameObjectQuery extends TileObjectQuery<GameObject, GameObjectQuery
 			.filter(Objects::nonNull)
 			.filter(predicate)
 			.distinct()
-			.collect(Collectors.toList()));
+			.collect(Collectors.toList()), client);
 	}
 
 	private Collection<GameObject> getGameObjects(Client client)

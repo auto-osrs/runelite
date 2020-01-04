@@ -24,16 +24,24 @@
  */
 package net.runelite.api;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Comparator;
-import javax.annotation.Nullable;
 
 public class LocatableQueryResults<EntityType extends Locatable> extends QueryResults<EntityType>
 {
 
+	private Client client;
+
 	public LocatableQueryResults(Collection<? extends EntityType> results)
 	{
 		super(results);
+	}
+
+	public LocatableQueryResults(Collection<? extends EntityType> results, Client client)
+	{
+		super(results);
+		this.client = client;
 	}
 
 	@Nullable
@@ -42,6 +50,16 @@ public class LocatableQueryResults<EntityType extends Locatable> extends QueryRe
 		return this.stream()
 				.min(Comparator.comparing(entityType -> entityType.getLocalLocation().distanceTo(locatable.getLocalLocation())))
 				.orElse(null);
+	}
+
+	/**
+	 * The result that is closest to the current player.
+	 *
+	 * @return The closest result, can be null if no result exists.
+	 */
+	@Nullable
+	public EntityType nearest() {
+		return nearestTo(client.getLocalPlayer());
 	}
 
 }
