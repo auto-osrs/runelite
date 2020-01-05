@@ -20,7 +20,7 @@ public class GameObjectQueryBuilder extends GameObjectQuery {
     /**
      * Filters the query results by their available actions.
      *
-     * @param actions The array of actions to be filtered.
+     * @param actions The array of actions to be matched.
      * @return The GameObjectQueryBuilder object to allow chaining.
      */
     public GameObjectQueryBuilder actions(String ... actions) {
@@ -29,7 +29,7 @@ public class GameObjectQueryBuilder extends GameObjectQuery {
 
             for (String action : actions) {
                 for (String gameObjectAction : gameObjectActions) {
-                    if (gameObjectAction != null && gameObjectAction.equals(action)) {
+                    if (gameObjectAction.equals(action)) {
                         return true;
                     }
                 }
