@@ -40,4 +40,25 @@ public class GameObjectQueryBuilder extends GameObjectQuery {
         return this;
     }
 
+    /**
+     * Filters the query results by their name.
+     *
+     * @param names The array of names to be matched.
+     * @return The GameObjectQueryBuilder object to allow chaining.
+     */
+    public GameObjectQueryBuilder names(String ... names) {
+        predicate = and(gameObject -> {
+            String gameObjectName = client.getObjectDefinition(gameObject.getId()).getName();
+
+            for (String name : names) {
+                if (name.equals(gameObjectName)) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        return this;
+    }
+
 }
