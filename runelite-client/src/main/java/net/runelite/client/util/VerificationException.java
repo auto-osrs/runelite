@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Adam <Adam@sigterm.info>
+ * Copyright (c) 2019, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,14 +22,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.chat;
+package net.runelite.client.util;
 
-import net.runelite.client.events.ChatboxInput;
-import net.runelite.client.events.PrivateMessageInput;
-
-public interface ChatboxInputListener
+public class VerificationException extends Exception
 {
-	boolean onChatboxInput(ChatboxInput chatboxInput);
+	public VerificationException(String message)
+	{
+		super(message);
+	}
 
-	boolean onPrivateMessageInput(PrivateMessageInput privateMessageInput);
+	public VerificationException(String message, Throwable cause)
+	{
+		super(message, cause);
+	}
 }
